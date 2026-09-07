@@ -1,0 +1,47 @@
+{
+  "skill_name": "connect-unity-mcp",
+  "evals": [
+    {
+      "id": 1,
+      "name": "fresh-project-first-time-setup",
+      "prompt": "이거 새로 만든 유니티 프로젝트인데, 여기서 Claude Code가 씬이랑 게임오브젝트를 직접 조작할 수 있게 MCP for Unity 연결 좀 해줘. 프로젝트 경로는 /tmp/connect-unity-mcp-workspace/fixtures/fixture-fresh 야. 이 프로젝트엔 Unity MCP 관련 설정이 하나도 없는 상태야.",
+      "expected_output": "Adds com.coplaydev.unity-mcp to Packages/manifest.json (preserving the two existing dependencies), creates .mcp.json with the unity http server entry on port 8080, clearly tells the user Unity itself needs to be opened for the bridge server to actually start, and does not falsely claim the connection is verified/live since no real Unity Editor is running in this sandbox.",
+      "files": [],
+      "assertions": [
+        "manifest.json contains a com.coplaydev.unity-mcp dependency pointing at the CoplayDev unity-mcp git URL",
+        "manifest.json still contains both pre-existing dependencies (com.unity.textmeshpro, com.unity.render-pipelines.universal) unchanged",
+        ".mcp.json exists and contains mcpServers.unity with type \"http\" and url http://127.0.0.1:8080/mcp",
+        "the final report/summary explicitly tells the user to open (or focus) the Unity Editor for the bridge server to start",
+        "the final report/summary does not falsely claim a live/verified Unity connection exists"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "merge-with-existing-mcp-json",
+      "prompt": "우리 프로젝트 .mcp.json에 이미 filesystem MCP 서버가 등록돼 있는데, 여기에 Unity MCP도 추가로 연결하고 싶어. 프로젝트는 /tmp/connect-unity-mcp-workspace/fixtures/fixture-partial 이야.",
+      "expected_output": "Adds com.coplaydev.unity-mcp to manifest.json, and merges a new \"unity\" entry into the existing .mcp.json WITHOUT removing or altering the pre-existing \"filesystem\" server entry. Reports what changed and tells the user to open Unity to finish the connection.",
+      "files": [],
+      "assertions": [
+        "manifest.json contains a com.coplaydev.unity-mcp dependency",
+        "manifest.json still contains the pre-existing com.unity.ugui dependency unchanged",
+        ".mcp.json still contains the pre-existing \"filesystem\" server entry completely unchanged (command/args intact)",
+        ".mcp.json contains a new mcpServers.unity entry with type \"http\" and a valid url",
+        "the final report/summary tells the user to open Unity Editor for the bridge server to start"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "verify-already-configured-no-unity-running",
+      "prompt": "예전에 Unity MCP 연결 설정을 해놨던 것 같은데, 지금 잘 연결돼 있는지 확인 좀 해줘. 프로젝트는 /tmp/connect-unity-mcp-workspace/fixtures/fixture-configured 이고, 지금 Unity 에디터는 안 켜놓은 상태야.",
+      "expected_output": "Detects that Packages/manifest.json and .mcp.json are already fully configured and reports that plainly (no duplicate edits, no re-adding entries). Attempts to verify a live connection, finds none (since no Unity Editor is actually running), and gives the user a clear, honest next step (open Unity and wait for it to finish compiling) instead of claiming success or treating the missing live connection as a script failure.",
+      "files": [],
+      "assertions": [
+        "manifest.json contains exactly one com.coplaydev.unity-mcp entry (not duplicated)",
+        ".mcp.json contains exactly one mcpServers.unity entry with the correct url (not duplicated or corrupted)",
+        "the final report/summary explicitly states the config was already present rather than describing new edits that didn't happen",
+        "the final report/summary does not falsely claim a verified live connection to a running Unity instance",
+        "the final report/summary gives an actionable next step (open Unity, wait for compile) instead of treating this as an error"
+      ]
+    }
+  ]
+}
